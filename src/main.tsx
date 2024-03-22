@@ -4,6 +4,7 @@ import App from './App.tsx'
 import './main.css'
 import './tenupSmartNew.css'
 import './slider.css'
+import './index.css'
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

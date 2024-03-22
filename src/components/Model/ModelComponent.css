@@ -1,0 +1,15 @@
+.cus_modal_body{
+    background: #001B3D;
+    padding: 2.1rem;
+    border-radius: 27px;
+}
+
+.cus_modal_button{
+    width: 100% !important;
+    border-radius: 21px !important;
+    margin-top: 57px !important;
+    margin-bottom: 57px !important;
+}
+.modal-content{
+    background: transparent;
+}

@@ -2,47 +2,73 @@ import './App.css'
 import { useState, useEffect } from 'react'
 import { formatBalance, formatChainAsNum } from './utils'  /* New */
 import detectEthereumProvider from '@metamask/detect-provider'
-
+import ModelComponent from './components/Model/ModelComponent'
 const App = () => {
   const [hasProvider, setHasProvider] = useState<boolean | null>(null)
   const initialState = { accounts: [], balance: "", chainId: "" }  /* Updated */
+  const initialUser={access_token:"",wallet_address:"",balance:0}
   const [wallet, setWallet] = useState(initialState)
+  const [errorMsg,setErrorMsg]=useState('')
+  
+  
+  // modal
+  const [showModal,setShowModal]=useState(false)
+  const [modalTitle,setModalTitle]=useState("")
+  const [modalActionType,setModalActionType]=useState("")
 
+  // 
+  const [userDetail,setUserDetail]=useState(initialUser)
   useEffect(() => {
-    const refreshAccounts = (accounts: any) => {
-      if (accounts.length > 0) {
-        updateWallet(accounts)
-      } else {
-        // if length 0, user is disconnected
-        setWallet(initialState)
+    if(userDetail?.access_token){
+        const refreshAccounts = (accounts: any) => {
+        if (accounts.length > 0) {
+          console.log('accountdt',accounts)
+          updateWallet(accounts)
+        } else {
+          // if length 0, user is disconnected
+          setWallet(initialState)
+        }
+      }
+
+      const refreshChain = (chainId: any) => {               /* New */
+        setWallet((wallet) => ({ ...wallet, chainId }))      /* New */
+      }                                                      /* New */
+
+      const getProvider = async () => {
+        const provider = await detectEthereumProvider({ silent: true })
+        setHasProvider(Boolean(provider))
+        console.log("sdf",provider)
+        if (provider) {                                           
+          const accounts = await window.ethereum.request(
+            { method: 'eth_accounts' }
+          )
+          refreshAccounts(accounts)
+          window.ethereum.on('accountsChanged', refreshAccounts)
+          window.ethereum.on("chainChanged", refreshChain)  /* New */
+        }
+      }
+
+      getProvider()
+
+      return () => {
+        window.ethereum?.removeListener('accountsChanged', refreshAccounts)
+        window.ethereum?.removeListener("chainChanged", refreshChain)  /* New */
       }
     }
+  }, [userDetail])
 
-    const refreshChain = (chainId: any) => {               /* New */
-      setWallet((wallet) => ({ ...wallet, chainId }))      /* New */
-    }                                                      /* New */
-
-    const getProvider = async () => {
-      const provider = await detectEthereumProvider({ silent: true })
-      setHasProvider(Boolean(provider))
-      console.log("sdf",provider)
-      if (provider) {                                           
-        const accounts = await window.ethereum.request(
-          { method: 'eth_accounts' }
-        )
-        refreshAccounts(accounts)
-        window.ethereum.on('accountsChanged', refreshAccounts)
-        window.ethereum.on("chainChanged", refreshChain)  /* New */
-      }
-    }
-
-    getProvider()
-
-    return () => {
-      window.ethereum?.removeListener('accountsChanged', refreshAccounts)
-      window.ethereum?.removeListener("chainChanged", refreshChain)  /* New */
-    }
-  }, [])
+  const updateWalletAddress=async(acount:any)=>{
+    console.log(acount)
+    // const response = await fetch('http://127.0.0.1:8000/api/updatewalletaddress', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'Authorization':"Bearer "+userDetail?.access_token
+    //     },
+    //     body: JSON.stringify({wallet_address: acount}),
+    //   });
+    // console.log(response)
+  }
 
   const updateWallet = async (accounts:any) => {
     const balance = formatBalance(await window.ethereum!.request({   
@@ -51,7 +77,8 @@ const App = () => {
     }))                                                              
     const chainId = await window.ethereum!.request({                  
       method: "eth_chainId",                                          
-    })                                                                
+    })     
+    updateWalletAddress(accounts[0])                                                           
     setWallet({ accounts, balance, chainId })                        
   }
 
@@ -71,49 +98,98 @@ const App = () => {
     setWallet(initialState)
     // updateWallet(accounts)
   }
+
+
+  const handleSignUp=async()=>{
+    setModalTitle("Sign Up")
+    setModalActionType("signup")
+    setShowModal(true)
+  }
+
+  const handleSignIn=async()=>{
+    setModalTitle("Sign In")
+    setModalActionType("signin")
+    setShowModal(true)
+    
+  }
+  const handleAddBalance=async()=>{
+    setModalTitle("Add Balance")
+    setModalActionType("addbalance")
+    setShowModal(true)
+    
+  }
+  const handleWithdrawal=async()=>{
+    setModalTitle("Withdrawal")
+    setModalActionType("withdrawal")
+    setShowModal(true)
+    
+  }
+
+ const closeModel=async()=>{
+  setShowModal(false)
+ }
+
+ const updateUserDt=async(data:any)=>{
+  closeModel()
+  setUserDetail(data)
+ }
+
+ const logoutHandler=async()=>{
+  await window.ethereum.request({
+    method: "wallet_revokePermissions",
+    params: [{eth_accounts: {}}]
+  })
+  setUserDetail(initialUser)
+ }
+ 
   return (
-    <div className="smartNew-main">
+    <div>
+      <div className="smartNew-main">
       <div className='wrapper'>
         <header className="header">
 
           <nav className="container nav__con">
               <a href="index.html" className="logo">
-                  {/* <div className="logo__img2"></div> */}
-                  <div className="logo__title">Cryptoland</div>
+                  <div className="logo__img2"></div>
+                  {/* <div className="logo__title">Cryptoland</div> */}
               </a>
-
               <ul className="menu">
-                  <li className="menu__item">
-                      <a href="#first-screen" className="menu__link">Home</a>
-                  </li>
-                  <li className="menu__item">
-                      <a href="#staking-ts" className="menu__link">Staking</a>
-                  </li>
-                  <li className="menu__item">
-                      <a href="#crosschain-ts" target="_blank" className="menu__link">Bridge</a>
-                  </li>
-                  <li className="menu__item">
-                      <a href="#roadmap-ib" className="menu__link">Roadmap</a>
-                  </li>
-                  <li className="menu__item">
-                      <a href="#document-ts" className="menu__link">WhitePaper</a>
-                  </li>
-                  <li className="menu__item">
-                      <a href="#dapps-ts" className="menu__link">DAPP's</a>
-                  </li>
-                  <li className="menu__item">
-                      <a href="https://blog.tenup.io/" target="_blank" className="menu__link">Blog</a>
-                  </li>
+                        <li className="menu__item">
+                            <a href="#" className="menu__link">Home</a>
+                        </li>
+                        <li className="menu__item">
+                            <a href="https://tenup.io/" target="_blank" className="menu__link">Tenup</a>
+                        </li>
+                        <li className="menu__item">
+                            <a href="https://dapp.tenup.io/virtual-mining" target="_blank" className="menu__link">Staking</a>
+                        </li>
+                        <li className="menu__item">
+                            <a href="https://topup.tenup.io/" target="_blank" className="menu__link">Top Up</a>
+                        </li>
+                        <li className="menu__item">
+                            <a href="https://analyzer.tenup.io/" target="_blank" className="menu__link">Analyzer</a>
+                        </li>
+                        <li className="menu__item">
+                            <a href="https://tenup.medium.com" target="_blank" className="menu__link">Blog</a>
+                        </li>
               </ul>
-
+              {!userDetail?.access_token && 
+                <div className="header__right">
+                  <button  className="btn-sign-in mx-2"  onClick={handleSignUp}>Sign Up</button>
+                  <button  className="btn-sign-in mx-2"  onClick={handleSignIn}>Sign In</button>
+                </div>
+              }
+             
+              {userDetail?.access_token && 
               <div className="header__right">
-              { window.ethereum?.isMetaMask && wallet.accounts.length < 1 &&
-                  <button  className="btn-sign-in"  onClick={handleConnect}>Connect MetaMask</button>
-                }
-                { !(window.ethereum?.isMetaMask && wallet.accounts.length < 1) &&
-                  <button  className="btn-sign-in"  onClick={handleDisconnectConnect}>Disconnect</button>
-                }
-              </div>
+                      { window.ethereum?.isMetaMask && wallet.accounts.length < 1 &&
+                        <button className="btn-sign-in mx-2"  onClick={handleConnect}>Connect MetaMask</button>
+                      }
+                      { !(window.ethereum?.isMetaMask && wallet.accounts.length < 1) &&
+                        <button className="btn-sign-in mx-2"  onClick={handleDisconnectConnect}>Disconnect MetaMask</button>
+                      }
+                      <button className="btn-sign-in mx-2"  onClick={logoutHandler}>Logout</button>
+              </div>}
 
             </nav>
 
@@ -139,38 +215,9 @@ const App = () => {
                 </div>
 
                 <div className="fixed-menu__content">
-
-                    <ul className="mob-menu">
-                        <li className="mob-menu__item">
-                            <a href="#first-screen" className="mob-menu__link">Home</a>
-                        </li>
-                        <li className="mob-menu__item">
-                            <a href="#staking" className="menu__link">Staking</a>
-                        </li>
-                        <li className="mob-menu__item">
-                            <a href="https://bridge.tenup.io/" target="_blank" className="mob-menu__link">Bridge</a>
-                        </li>
-                        <li className="mob-menu__item">
-                            <a href="#token" className="mob-menu__link">Tokenomics</a>
-                        </li>
-                        <li className="mob-menu__item">
-                            <a href="#map" className="mob-menu__link">Roadmap</a>
-                        </li>
-                        <li className="mob-menu__item">
-                            <a href="#docs" className="mob-menu__link">WhitePaper</a>
-                        </li>
-                        <li className="mob-menu__item">
-                            <a href="#projs" className="mob-menu__link">DAPP's</a>
-                        </li>
-                    </ul>
-
                     <div className="btn-wrap">
-                    { window.ethereum?.isMetaMask && wallet.accounts.length < 1 &&
-                        <button  className="btn-sign-in"  onClick={handleConnect}>Connect MetaMask</button>
-                      }
-                      { !(window.ethereum?.isMetaMask && wallet.accounts.length < 1) &&
-                        <button  className="btn-sign-in"  onClick={handleDisconnectConnect}>Disconnect</button>
-                      }
+                    <button  className="btn-sign-in"  onClick={handleSignUp}>Sign Up</button>
+                    <button  className="btn-sign-in"  onClick={handleSignIn}>Sign In</button>
                     </div>
 
 
@@ -179,17 +226,17 @@ const App = () => {
          <section className="first-screen" id="first-screen">
                 <img className="effect1" src="./img/headerEffect1.png" alt="" />
 
-                <div className="container">
+                <div className="container my-3">
                     <img className="effect2" src="./img/headerEffect2.png" alt=""/>
                     <div className="row">
                         <div className="col-lg-7 " style={{"display":"flex","flexDirection":"column","justifyContent": "center"}}>
-                            <h2 className="heading aos-init aos-animate" data-aos="fade-up" data-aos-anchor="#first-screen" data-aos-delay="200" style={{"textAlign": "left","color": "white"}}>Tenup : A Decentralized Platform <br/> for Web3 Dapps
+                            <h2 className="heading aos-init aos-animate my-2" data-aos="fade-up" data-aos-anchor="#first-screen" data-aos-delay="200" style={{"textAlign": "left","color": "white"}}>TENUP PRESENTING<br/> LUDO LOVE
                             </h2>
 
                             <h2 className="heading aos-init aos-animate" data-aos="fade-up" data-aos-anchor="#first-screen" style={{"color":" white","textAlign":"left"}}></h2>
                             <div className="headingBar"></div>
-                            <h2 className="typing-demo  color-white mt-3" id="text2" style={{"color": "rgb(255, 255, 255)"}}>When the world is DECENTRALIZING, You should too.</h2>
-                            <div className="socialMain head">
+                            <h2 className="typing-demo  color-white my-3" id="text2" style={{"color": "rgb(255, 255, 255)"}}>An upgraded version from Ludo NFT!</h2>
+                            <div className="socialMain head my-3">
                                 <a href="https://www.facebook.com/TenUpNation/" target="_blank">
                                     <img src="/img/fbIcon.svg" alt="fbIcon"/>
                                 </a>
@@ -210,22 +257,33 @@ const App = () => {
                                     <img src="/img/discord.png" alt="discord"/>
                                 </a>
                             </div>
-
+                            <div className='d-flex flex-row mt-3'>
+                              <div className='p-3'>
+                              <a href="https://play.google.com/store/apps/details?id=com.ludo.nft" target="_blank">
+                                <img className='cus_download_btn' src='img/googlePlayNew.png'/>
+                              </a>
+                              </div>
+                              <div className='p-3'>
+                              <a href="https://apps.apple.com/de/app/ludo-up/id1666628549?l=en" target="_blank">
+                                <img className='cus_download_btn' src='img/AppStoreNew.png'/>
+                              </a>
+                              </div>
+                            </div>
 
                         </div>
                         <div className="col-lg-5">
                             <div className="imgDiv bannerSlide slick-initialized slick-slider slick-dotted">
                                 <div className="slick-list draggable">
                                   <div className="slick-track" style={{"opacity": "1", "width": "4005px", "transform": "translate3d(-1335px, 0px, 0px)"}}>
-                                    <img src="./img/banner4.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="-1" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
-                                    <img src="./img/game_controller.png" className="childImg img-fluid slick-slide" data-slick-index="0" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1} role="tabpanel" id="slick-slide10" aria-describedby="slick-slide-control10"/>
-                                    <img src="./img/banner2.png" className="childImg img-fluid slick-slide" data-slick-index="1" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1} role="tabpanel" id="slick-slide11" aria-describedby="slick-slide-control11"/>
-                                    <img src="./img/banner3.png" className="childImg img-fluid slick-slide slick-current slick-active" data-slick-index="2" aria-hidden="false" style={{"width": "445px"}} tabIndex={0} role="tabpanel" id="slick-slide12" aria-describedby="slick-slide-control12"/>
-                                    <img src="./img/banner4.png" className="childImg img-fluid slick-slide" data-slick-index="3" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1} role="tabpanel" id="slick-slide13" aria-describedby="slick-slide-control13"/>
-                                    <img src="./img/game_controller.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="4" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
-                                    <img src="./img/banner2.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="5" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
-                                    <img src="./img/banner3.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="6" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
-                                    <img src="./img/banner4.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="7" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
+                                    <img src="./img/LudoLove.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="-1" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
+                                    <img src="./img/LudoLove.png" className="childImg img-fluid slick-slide" data-slick-index="0" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1} role="tabpanel" id="slick-slide10" aria-describedby="slick-slide-control10"/>
+                                    <img src="./img/LudoLove.png" className="childImg img-fluid slick-slide" data-slick-index="1" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1} role="tabpanel" id="slick-slide11" aria-describedby="slick-slide-control11"/>
+                                    <img src="./img/LudoLove.png" className="childImg img-fluid slick-slide slick-current slick-active" data-slick-index="2" aria-hidden="false" style={{"width": "445px"}} tabIndex={0} role="tabpanel" id="slick-slide12" aria-describedby="slick-slide-control12"/>
+                                    <img src="./img/LudoLove.png" className="childImg img-fluid slick-slide" data-slick-index="3" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1} role="tabpanel" id="slick-slide13" aria-describedby="slick-slide-control13"/>
+                                    <img src="./img/LudoLove.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="4" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
+                                    <img src="./img/LudoLove.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="5" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
+                                    <img src="./img/LudoLove.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="6" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
+                                    <img src="./img/LudoLove.png" className="childImg img-fluid slick-slide slick-cloned" data-slick-index="7" aria-hidden="true" style={{"width": "445px"}} tabIndex={-1}/>
                                   </div>
                                 </div>
                                 
@@ -248,14 +306,21 @@ const App = () => {
                             </div>
                         </div>
                     </div>
+                {userDetail?.access_token && <div className='cus_trans_div py-2'>
+                  <div className='col-12 text-center text-white mt-3'><h3 style={{"color":"white"}}>Your current balance :{userDetail?.balance}</h3></div>
+                  {!(window.ethereum?.isMetaMask && wallet.accounts.length < 1) ?<div className='d-flex justify-content-center'>
+                    <div className='col-5 px-5'><button  className="btn-sign-in cus_modal_button" onClick={handleAddBalance}>Add Balance</button></div>
+                    <div className='col-5 px-5'><button  className="btn-sign-in cus_modal_button" >Withdrawal</button></div>
+                  </div>:<p className='text-white'>Please Connect Metamask to Proceed</p>}
+                </div>}
                 </div>
             </section> 
 
 
       </div>
-      <div>Injected Provider {hasProvider ? 'DOES' : 'DOES NOT'} Exist</div>
+      {/* <div>Injected Provider {hasProvider ? 'DOES' : 'DOES NOT'} Exist</div> */}
 
-      { window.ethereum?.isMetaMask && wallet.accounts.length < 1 &&
+      {/* { window.ethereum?.isMetaMask && wallet.accounts.length < 1 &&
         <button onClick={handleConnect}>Connect MetaMask</button>
       }
       { !(window.ethereum?.isMetaMask && wallet.accounts.length < 1) &&
@@ -263,14 +328,26 @@ const App = () => {
       }
 
       { wallet.accounts.length > 0 &&
-        <>                                                               {/* New */}
+        <>                                                               
           <div>Wallet Accounts: {wallet.accounts[0]}</div>
-          <div>Wallet Balance: {wallet.balance}</div>                    {/* New */}
-          <div>Hex ChainId: {wallet.chainId}</div>                       {/* New */}
-          <div>Numeric ChainId: {formatChainAsNum(wallet.chainId)}</div> {/* New */}
+          <div>Wallet Balance: {wallet.balance}</div>                    
+          <div>Hex ChainId: {wallet.chainId}</div>                       
+          <div>Numeric ChainId: {formatChainAsNum(wallet.chainId)}</div> 
         </>
-      }
+      } */}
     </div>
+    {/* modal */}
+    {showModal && <ModelComponent  userDetail={userDetail} title={modalTitle} modalActionType={modalActionType}  onClose={closeModel} updateUser={updateUserDt} setErrorMessage={setErrorMsg}></ModelComponent>}
+    {errorMsg && <div className="toast align-items-center show bg-danger text-white cus_toast" role="alert" aria-live="assertive" aria-atomic="true">
+      <div className="d-flex">
+        <div className="toast-body">
+        {errorMsg}
+      </div>
+        <button type="button" className="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close" onClick={()=>{setErrorMsg('')}}></button>
+      </div>
+    </div>}
+    </div>
+
   )
 }
 

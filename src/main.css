@@ -4416,7 +4416,7 @@ section {
   -webkit-align-items: center;
   -ms-flex-align: center;
   align-items: center;
-  margin-left: 80px;
+  /* margin-left: 80px; */
 }
 
 
@@ -4455,10 +4455,10 @@ section {
   width: 220px;
 }
 .header.sticky .logo__img2 {
-  background-image: url(../img/logo.png);
+  background-image: url(../public/img/LudoLoveLogo.png);
   /* background-image: url(../img/logoGif.gif); */
-  height: 75px;
-  width: 220px;
+  height: 99px;
+  width: 99px;
 }
 
 .header.sticky .menu__link {
@@ -4535,9 +4535,10 @@ section {
 .logo__img2 {
   /* width: 45px;
   height: 51px; */
-  height: 74px;
-  width: 130px;
-  background-image: url(../img/logo.png);
+  margin-top: 12px;
+  height: 99px;
+  width: 99px;
+  background-image: url(../public/img/LudoLoveLogo.png);
   /* background-image: url(../img/logoGif.gif); */
   -webkit-background-size: contain;
   background-size: contain;
@@ -4570,9 +4571,9 @@ section {
   width: 235px;
 }
 .logo--color .logo__img2 {
-  background-image: url(../img/logo.png);
-  height: 74px;
-  width: 235px;
+  background-image: url(../public/img/LudoLoveLogo.png);
+  height: 99px;
+  width: 99px;
 }
 
 .logo--color .logo__title {
@@ -5005,7 +5006,7 @@ section {
   color: #17447E;
 }
 .btn-sign-in {
-  width: 180px;
+  width: 189px;
   height: 50px;
   -webkit-border-radius: 5px;
   border-radius: 5px;
