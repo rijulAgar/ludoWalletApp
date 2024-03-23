@@ -3,19 +3,20 @@ import { useState, useEffect } from 'react'
 import { formatBalance, formatChainAsNum } from './utils'  /* New */
 import detectEthereumProvider from '@metamask/detect-provider'
 import ModelComponent from './components/Model/ModelComponent'
+
 const App = () => {
   const [hasProvider, setHasProvider] = useState<boolean | null>(null)
   const initialState = { accounts: [], balance: "", chainId: "" }  /* Updated */
   const initialUser={access_token:"",wallet_address:"",balance:0}
   const [wallet, setWallet] = useState(initialState)
   const [errorMsg,setErrorMsg]=useState('')
-  
+  const API_URL=import.meta.env.VITE_API_URL
   
   // modal
   const [showModal,setShowModal]=useState(false)
   const [modalTitle,setModalTitle]=useState("")
   const [modalActionType,setModalActionType]=useState("")
-
+  
   // 
   const [userDetail,setUserDetail]=useState(initialUser)
   useEffect(() => {
@@ -59,7 +60,7 @@ const App = () => {
 
   const updateWalletAddress=async(acount:any)=>{
     console.log(acount)
-    // const response = await fetch('http://127.0.0.1:8000/api/updatewalletaddress', {
+    // const response = await fetch(API_URL+'/api/updatewalletaddress', {
     //     method: 'POST',
     //     headers: {
     //       'Content-Type': 'application/json',
@@ -83,15 +84,19 @@ const App = () => {
   }
 
   const handleConnect = async () => {
-    let accounts = await window.ethereum.request({
-      method: "eth_requestAccounts",
-    })
-    let req = await window.ethereum.request({
-      method: "wallet_requestPermissions",
-      params: [{eth_accounts: {}}]
-    })
-    console.log(req)
-    updateWallet(accounts)
+    if(window.ethereum){
+      let accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      })
+      let req = await window.ethereum.request({
+        method: "wallet_requestPermissions",
+        params: [{eth_accounts: {}}]
+      })
+      console.log(req)
+      updateWallet(accounts)
+    }else{
+        setErrorMsg("Install Metamask")
+    }
   }
 
   const handleDisconnectConnect = async () => {

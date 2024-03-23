@@ -22,7 +22,7 @@ const Login: React.FC<LoginComponentProps> = ({updateUser,setErrorMessage}) => {
     }
     try {
       setDisableBtn(true)
-      const response = await fetch('http://127.0.0.1:8000/api/login', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
